@@ -89,7 +89,9 @@ def transition_model(corpus, page, damping_factor) -> Dict[str, set]:
 # Ex.
 # { "1.html": [ "2.html", "3.html" ], "3.html": [ "1.html" ], "2.html": [] }
 # PS. It is possible to have a page with no links (look at the algorithm)
-def iterate_pagerank(corpus : Dict[str, List[str]], damping_factor: float) -> None:
+#def iterate_pagerank(corpus : Dict[str, List[str]], damping_factor: float) -> None:
+def iterate_pagerank(corpus : Dict[str, List[str]], _) -> None:
+
     """
     Return PageRank values for each page by iteratively updating
     PageRank values until convergence.
@@ -102,29 +104,41 @@ def iterate_pagerank(corpus : Dict[str, List[str]], damping_factor: float) -> No
     accuracy = 0.001
 
     # create the initial pagerank results
-    page_rank = dict[str, float]()
+    pagerank = dict[str, float]()
     
     # feed the pagerank results with pages as keys and the initial probability associated with (1/N)
     for page_key in corpus.keys():
-        page_rank[page_key] = 1/len(corpus) 
+        pagerank[page_key] = 1/len(corpus) 
 
-    for page, _ in page_rank:  
+    for page, curr_pr in pagerank.items():  
+        # all pages that linked to the current iteration page (ex. "2.html")
         linked_by = corpus[page]
-        page = (1-damping_factor)/len(corpus) + calculate_pr(linked_by)
+        pr = (1-DAMPING)/len(corpus) + calculate_pagerank(pagerank, linked_by, corpus)
         
-        #tm = transition_model(corpus, page, damping_factor) # what is exactly the transition model?
+        if pr - curr_pr <= accuracy: # convergence
+            continue 
         
-        # What convergence means in this context? (Statistics & Probalistics)
+        pagerank[page] = pr 
+          
 
-def calculate_pr(linked : List[str]) -> float:
-    for link in linked:
-        # do something
-        print(link)
+def calculate_pagerank(pagerank : dict[str, float], linked_by : List[str], corpus : Dict[str, List[str]]) -> float:
 
-    return 0.0
+    pagerank_plus = 0
+    links = corpus.keys() if not len(linked_by) else linked_by  
+    for link in links:
+    
+        print(f"link [linked_by]: {link}")
+    
+        # The code information below it is encoded in the transition_model (?)
+        pagerank_plus += DAMPING * pagerank[link]/len(corpus[link])
+    
+    print(f"pagerank_plus: {pagerank_plus}")
+    print("------------------------------------------------------------------------------------")
 
-#def formula() -> float:
-#    return 0.0
+    return pagerank_plus
+
+
+
 
 
 
