@@ -6,7 +6,7 @@ from typing import Dict, List
 
 DAMPING = 0.85
 SAMPLES = 10000
-
+ACCURACY = 0.001 # convergence
 
 def main():
     if len(sys.argv) != 2:
@@ -75,8 +75,9 @@ def transition_model(corpus, page, damping_factor) -> Dict[str, set]:
 
     return mapped_links 
 
-#def sample_pagerank(corpus, damping_factor, n):
-#    """
+
+def sample_pagerank(corpus, damping_factor, n):
+    """
 #    Return PageRank values for each page by sampling `n` pages
 #    according to transition model, starting with a page at random.
 #
@@ -84,7 +85,8 @@ def transition_model(corpus, page, damping_factor) -> Dict[str, set]:
 #    their estimated PageRank value (a value between 0 and 1). All
 #    PageRank values should sum to 1.
 #    """
-#    raise NotImplementedError
+    raise NotImplementedError
+
 
 # Ex.
 # { "1.html": [ "2.html", "3.html" ], "3.html": [ "1.html" ], "2.html": [] }
@@ -100,28 +102,54 @@ def iterate_pagerank(corpus : Dict[str, List[str]], _) -> None:
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    # set accuracy
-    accuracy = 0.001
-
+    
     # create the initial pagerank results
     pagerank = dict[str, float]()
     
     # feed the pagerank results with pages as keys and the initial probability associated with (1/N)
     for page_key in corpus.keys():
-        pagerank[page_key] = 1/len(corpus) 
+        pagerank[page_key] = 1/len(corpus)
+    
+    # Modify pagerank with no need to return it? (from this current method)
+    update_pr_V2(pagerank, corpus)
+  
 
-    for page, curr_pr in pagerank.items():  
+def update_pr_V2(pagerank : dict[str, float], corpus : Dict[str, List[str]]) -> None:
+    
+    convergence = list()
+    for page, curr_pr in pagerank.items():    
+        pagerank_plus = 0
+
         # all pages that linked to the current iteration page (ex. "2.html")
         linked_by = corpus[page]
-        pr = (1-DAMPING)/len(corpus) + calculate_pagerank(pagerank, linked_by, corpus)
+        links = corpus.keys() if not len(linked_by) else linked_by  
+        for link in links:
         
-        if pr - curr_pr <= accuracy: # convergence
+            print(f"link [linked_by]: {link}")
+        
+            # The code information below it is encoded in the transition_model (?)
+            pagerank_plus += formula(pagerank[link], len(corpus[link]))
+        
+
+        # -------------------------------------------------------------------------------------------        
+        print(f"pagerank_plus: {pagerank_plus}")
+        print("------------------------------------------------------------------------------------")
+        # -------------------------------------------------------------------------------------------
+
+
+        pr = (1-DAMPING)/len(corpus) + pagerank_plus       
+        if pr - curr_pr <= ACCURACY: # convergence
+            convergence.append(page)
+            if len(convergence) == len(corpus):
+                return 
             continue 
         
-        pagerank[page] = pr 
-          
+        pagerank[page] = pr
 
-def calculate_pagerank(pagerank : dict[str, float], linked_by : List[str], corpus : Dict[str, List[str]]) -> float:
+    update_pr_V2(pagerank, corpus)
+
+
+def update_pr(pagerank : dict[str, float], linked_by : List[str], corpus : Dict[str, List[str]]) -> float:
 
     pagerank_plus = 0
     links = corpus.keys() if not len(linked_by) else linked_by  
@@ -130,13 +158,18 @@ def calculate_pagerank(pagerank : dict[str, float], linked_by : List[str], corpu
         print(f"link [linked_by]: {link}")
     
         # The code information below it is encoded in the transition_model (?)
-        pagerank_plus += DAMPING * pagerank[link]/len(corpus[link])
+        # First time pagerank[link] will be equal to 1/N
+        pagerank_plus += formula(pagerank[link], len(corpus[link]))
+        # pagerank_plus += DAMPING * pagerank[link]/len(corpus[link])
     
     print(f"pagerank_plus: {pagerank_plus}")
     print("------------------------------------------------------------------------------------")
 
     return pagerank_plus
 
+
+def formula(curr_pagerank, page_len):
+    return DAMPING * curr_pagerank/page_len
 
 
 
