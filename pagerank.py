@@ -9,13 +9,16 @@ SAMPLES = 10000
 ACCURACY = 0.001 # convergence
 
 def main():
+    
     if len(sys.argv) != 2:
         sys.exit("Usage: python pagerank.py corpus")
     corpus = crawl(sys.argv[1])
-    ranks = sample_pagerank(corpus, DAMPING, SAMPLES)
-    print(f"PageRank Results from Sampling (n = {SAMPLES})")
-    for page in sorted(ranks):
-        print(f"  {page}: {ranks[page]:.4f}")
+    
+    #ranks = sample_pagerank(corpus, DAMPING, SAMPLES)
+    #print(f"PageRank Results from Sampling (n = {SAMPLES})")
+    #for page in sorted(ranks):
+    #    print(f"  {page}: {ranks[page]:.4f}")
+
     ranks = iterate_pagerank(corpus, DAMPING)
     print(f"PageRank Results from Iteration")
     for page in sorted(ranks):
@@ -23,11 +26,7 @@ def main():
 
 
 def crawl(directory):
-    """
-    Parse a directory of HTML pages and check for links to other pages.
-    Return a dictionary where each key is a page, and values are
-    a list of all other pages in the corpus that are linked to by the page.
-    """
+
     pages = dict()
 
     # Extract all links from HTML files
@@ -37,7 +36,9 @@ def crawl(directory):
         with open(os.path.join(directory, filename)) as f:
             contents = f.read()
             links = re.findall(r"<a\s+(?:[^>]*?)href=\"([^\"]*)\"", contents)
-            pages[filename] = set(links) - {filename} # all links founded on the .html file except for links to the .html file itself
+
+            # all links founded on the .html file except for links to the .html file itself
+            pages[filename] = set(links) - {filename} 
 
     # Only include links to other pages in the corpus
     for filename in pages:
@@ -85,111 +86,92 @@ def sample_pagerank(corpus, damping_factor, n):
 #    their estimated PageRank value (a value between 0 and 1). All
 #    PageRank values should sum to 1.
 #    """
-    raise NotImplementedError
+    
 
-
-# Ex.
-# { "1.html": [ "2.html", "3.html" ], "3.html": [ "1.html" ], "2.html": [] }
-# PS. It is possible to have a page with no links (look at the algorithm)
-#def iterate_pagerank(corpus : Dict[str, List[str]], damping_factor: float) -> None:
-def iterate_pagerank(corpus : Dict[str, List[str]], _) -> None:
+def iterate_pagerank(corpus : Dict[str, List[str]], _):
 
     """
     Return PageRank values for each page by iteratively updating
-    PageRank values until convergence.
-
-    Return a dictionary where keys are page names, and values are
-    their estimated PageRank value (a value between 0 and 1). All
-    PageRank values should sum to 1.
+    PageRank values until convergence.  
     """
+
+    print(f"CORPUS -> {corpus}\n\n")
     
     # create the initial pagerank results
     pagerank = dict[str, float]()
     
-    # feed the pagerank results with pages as keys and the initial probability associated with (1/N)
-    for page_key in corpus.keys():
-        pagerank[page_key] = 1/len(corpus)
+    link_by = dict[str, list[str]]()
+    keys = corpus.keys() # Lista de chaves (string)
     
+    print(f"keys: {keys}")
+
+    # feed the pagerank results with pages as keys and the initial probability associated with it (1/N)
+    for page_key_i in keys:
+        pagerank[page_key_i] = 1/len(corpus)
+        link_by[page_key_i] = []
+        
+        for page_key_j in keys:
+            if page_key_i in corpus[page_key_j]:
+                link_by[page_key_i].append(page_key_j)
+        
+        print(f"link_by[page_key_i]: {link_by[page_key_i]}")
+
+        if not len(link_by[page_key_i]):
+            link_by[page_key_i] = [*keys]
+
+        #link_by[page_key_i] = [page_key_j if page_key_i in corpus[page_key_j] else (*keys) for page_key_j in keys] 
+                                                                             
     # Modify pagerank with no need to return it? (from this current method)
-    update_pr_V2(pagerank, corpus)
+    update(corpus, pagerank, link_by, convergence=list())
+
+    return pagerank
   
 
-def update_pr_V2(pagerank : dict[str, float], corpus : Dict[str, List[str]]) -> None:
-    
-    convergence = list()
+def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by : dict[str, list[str]], convergence : list):
+          
+    print(f"linked_by: {link_by}")
+
     for page, curr_pr in pagerank.items():    
-        pagerank_plus = 0
-
-        # all pages that linked to the current iteration page (ex. "2.html")
-        linked_by = corpus[page]
-        links = corpus.keys() if not len(linked_by) else linked_by  
-        for link in links:
         
-            print(f"link [linked_by]: {link}")
+        print(f"Calculating pr for page {page} with current pr {curr_pr}")
+
+        pr = 0
+        for link in link_by[page]:
+
+            print(f"Link {link} to current iteration page {page}")
+
+            # The code information below could be encoded in the transition_model [theory]
+            link_page_pr = pagerank[link] # pagerank of the link (how do pagerank is built?)
+            num_of_links = len(corpus[link])
+
+            print(f"num_of_links (link): {num_of_links}")
+            
+            link_contribution = link_page_pr/num_of_links
+            
+            print(f"Link contribution: {link_contribution}")
+            pr = pr + DAMPING * link_contribution
+
         
-            # The code information below it is encoded in the transition_model (?)
-            pagerank_plus += formula(pagerank[link], len(corpus[link]))
-        
+        print(f"pr before DAMPING (0.15): {pr}")
+        pr = (1-DAMPING)/len(link_by) + pr
 
-        # -------------------------------------------------------------------------------------------        
-        print(f"pagerank_plus: {pagerank_plus}")
-        print("------------------------------------------------------------------------------------")
-        # -------------------------------------------------------------------------------------------
+        print(f"pr: {pr}")
+        print(f"curr_pr: {curr_pr}")
+        diff = pr - curr_pr
 
+        print(f"diff: {diff}")
+        if abs(diff) <= ACCURACY:
 
-        pr = (1-DAMPING)/len(corpus) + pagerank_plus       
-        if pr - curr_pr <= ACCURACY: # convergence
+            print(f"CONVERGENCE for page {page}")
             convergence.append(page)
+            
             if len(convergence) == len(corpus):
-                return 
-            continue 
-        
-        pagerank[page] = pr
+                return pagerank
+        else:
+            pagerank[page] = pr
 
-    update_pr_V2(pagerank, corpus)
+    update(corpus, pagerank, link_by, convergence)
 
-
-def update_pr(pagerank : dict[str, float], linked_by : List[str], corpus : Dict[str, List[str]]) -> float:
-
-    pagerank_plus = 0
-    links = corpus.keys() if not len(linked_by) else linked_by  
-    for link in links:
-    
-        print(f"link [linked_by]: {link}")
-    
-        # The code information below it is encoded in the transition_model (?)
-        # First time pagerank[link] will be equal to 1/N
-        pagerank_plus += formula(pagerank[link], len(corpus[link]))
-        # pagerank_plus += DAMPING * pagerank[link]/len(corpus[link])
-    
-    print(f"pagerank_plus: {pagerank_plus}")
-    print("------------------------------------------------------------------------------------")
-
-    return pagerank_plus
-
-
-def formula(curr_pagerank, page_len):
-    return DAMPING * curr_pagerank/page_len
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-    raise NotImplementedError
 
 
 if __name__ == "__main__":
