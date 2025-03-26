@@ -122,12 +122,15 @@ def iterate_pagerank(corpus : Dict[str, List[str]], _):
         #link_by[page_key_i] = [page_key_j if page_key_i in corpus[page_key_j] else (*keys) for page_key_j in keys] 
                                                                              
     # Modify pagerank with no need to return it? (from this current method)
-    update(corpus, pagerank, link_by, convergence=list())
+    convergence = set() 
+    update(corpus, pagerank, link_by, convergence)
+
+    print(f"final convergence structure: {convergence}")
 
     return pagerank
   
 
-def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by : dict[str, list[str]], convergence : list):
+def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by : dict[str, list[str]], convergence : set):
           
     print(f"linked_by: {link_by}")
 
@@ -149,26 +152,28 @@ def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by :
             link_contribution = link_page_pr/num_of_links
             
             print(f"Link contribution: {link_contribution}")
-            pr = pr + DAMPING * link_contribution
+            #pr = pr + (DAMPING * link_contribution)
+            pr = pr + link_contribution
 
         
         print(f"pr before DAMPING (0.15): {pr}")
-        pr = (1-DAMPING)/len(link_by) + pr
+        pr = (1-DAMPING)/len(corpus) + DAMPING * pr
 
         print(f"pr: {pr}")
         print(f"curr_pr: {curr_pr}")
-        diff = pr - curr_pr
+        diff = curr_pr - pr 
 
         print(f"diff: {diff}")
         if abs(diff) <= ACCURACY:
 
-            print(f"CONVERGENCE for page {page}")
-            convergence.append(page)
+            print(f"REACH CONVERGENCE for page: {page}") 
+            pagerank[page] = pr
+            convergence.add(page)
             
             if len(convergence) == len(corpus):
                 return pagerank
         else:
-            pagerank[page] = pr
+            pagerank[page] = pr 
 
     update(corpus, pagerank, link_by, convergence)
 
