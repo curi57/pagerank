@@ -111,16 +111,11 @@ def iterate_pagerank(corpus : Dict[str, List[str]], _):
         link_by[page_key_i] = []
         
         for page_key_j in keys:
-            if page_key_i in corpus[page_key_j]:
+            if page_key_i in corpus[page_key_j] or not len(corpus[page_key_j]):
                 link_by[page_key_i].append(page_key_j)
         
         print(f"link_by[page_key_i]: {link_by[page_key_i]}")
-
-        if not len(link_by[page_key_i]):
-            link_by[page_key_i] = [*keys]
-
-        #link_by[page_key_i] = [page_key_j if page_key_i in corpus[page_key_j] else (*keys) for page_key_j in keys] 
-                                                                             
+                                                                       
     # Modify pagerank with no need to return it? (from this current method)
     convergence = set() 
     update(corpus, pagerank, link_by, convergence)
@@ -145,7 +140,7 @@ def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by :
 
             # The code information below could be encoded in the transition_model [theory]
             link_page_pr = pagerank[link] # pagerank of the link (how do pagerank is built?)
-            num_of_links = len(corpus[link])
+            num_of_links = len(corpus[link]) if len(corpus[link]) else len(corpus.keys())
 
             print(f"num_of_links (link): {num_of_links}")
             
