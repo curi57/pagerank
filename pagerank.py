@@ -4,9 +4,9 @@ import re
 import sys
 from typing import Dict, List
 
-DAMPING = 0.85
+DAMPING = 0.85 
 SAMPLES = 10000
-ACCURACY = 0.001 # convergence
+ACCURACY = 0.001 
 
 def main():
     
@@ -88,12 +88,7 @@ def sample_pagerank(corpus, damping_factor, n):
 #    """
     
 
-def iterate_pagerank(corpus : Dict[str, List[str]], _):
-
-    """
-    Return PageRank values for each page by iteratively updating
-    PageRank values until convergence.  
-    """
+def iterate_pagerank(corpus : Dict[str, List[str]], damping):
 
     print(f"CORPUS -> {corpus}\n\n")
     
@@ -118,14 +113,14 @@ def iterate_pagerank(corpus : Dict[str, List[str]], _):
                                                                        
     # Modify pagerank with no need to return it? (from this current method)
     convergence = set() 
-    update(corpus, pagerank, link_by, convergence)
+    update(corpus, pagerank, link_by, convergence, damping)
 
     print(f"final convergence structure: {convergence}")
 
     return pagerank
   
 
-def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by : dict[str, list[str]], convergence : set):
+def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by : dict[str, list[str]], convergence : set, damping : float):
           
     print(f"linked_by: {link_by}")
 
@@ -152,7 +147,7 @@ def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by :
 
         
         print(f"pr before DAMPING (0.15): {pr}")
-        pr = (1-DAMPING)/len(corpus) + DAMPING * pr
+        pr = (1-damping)/len(corpus) + damping * pr
 
         print(f"pr: {pr}")
         print(f"curr_pr: {curr_pr}")
@@ -170,7 +165,7 @@ def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by :
         else:
             pagerank[page] = pr 
 
-    update(corpus, pagerank, link_by, convergence)
+    update(corpus, pagerank, link_by, convergence, damping)
 
 
 
