@@ -71,18 +71,11 @@ def transition_model(corpus, page, damping_factor) -> Dict[str, float]:
     
     
 def sample_pagerank(corpus, damping_factor, n):
-    """
-#    Return PageRank values for each page by sampling `n` pages
-#    according to transition model, starting with a page at random.
-#
-#    Return a dictionary where keys are page names, and values are
-#    their estimated PageRank value (a value between 0 and 1). All
-#    PageRank values should sum to 1.
-#    """
     print(corpus)
     print(damping_factor)
     print(n)
     
+
 def iterate_pagerank(corpus : Dict[str, List[str]], damping):
   
     # create the initial pagerank results
@@ -109,25 +102,6 @@ def iterate_pagerank(corpus : Dict[str, List[str]], damping):
 
 def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by : dict[str, list[str]], convergence : set, damping : float):
       
-    #for page_key in corpus.keys():
-    #    
-    #    # where the source page weight comes in the pr link calculation?
-    #    pr = 0
-    #    page_pd = transition_model(corpus, page_key, damping_factor=damping)
-    #    for link, pd in page_pd.items():
-    #        pr = pr + pd 
-    #        
-    #        curr_pr = pagerank[link]
-    #        diff = curr_pr - pr                                      
-    #        if abs(diff) <= ACCURACY:
-    #            pagerank[link] = pr
-    #            convergence.add(link)
-    #            
-    #            if len(convergence) == len(corpus):
-    #                return pagerank
-    #        else:
-    #            pagerank[link] = pr 
-
     for page, curr_pr in pagerank.items():    
         pr = 0
         for link in link_by[page]:
