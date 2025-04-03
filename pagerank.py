@@ -50,33 +50,26 @@ def crawl(directory):
     return pages
 
 
-def transition_model(corpus, page, damping_factor) -> Dict[str, set]:
-    """
-    Return a probability distribution over which page to visit next,
-    given a current page.
+def transition_model(corpus, page, damping_factor) -> Dict[str, float]:
+    
+    # verify if the current page has links to other pages from the corpus
+    curr_page_links = corpus[page] if len(corpus[page]) else corpus.keys()
+    randomness = 1-damping_factor/len(curr_page_links)
+    equal_probability = 1/len(curr_page_links)
 
-    With probability `damping_factor`, choose a link at random
-    linked to by `page`. With probability `1 - damping_factor`, choose
-    a link at random chosen from all pages in the corpus.
-    """
-    mapped_links = dict[str, set]()
+    # probability distribution structure
+    pd = dict() 
+    
+    # every page in the corpus
+    for page in corpus.keys():
+        if page in curr_page_links:
+            pd[page] = randomness + (damping_factor * equal_probability)
+        else:
+            pd[page] = randomness
 
-    links = corpus[page]
-    dist_sum = 0
-    for link in links:
-        prob = ((1 - damping_factor)/len(corpus)) + (1/len(links) * damping_factor)
-        mapped_links[link] = prob
-        dist_sum += prob  
-
-    #prop_dist[page] = 1 - dist_sum
-    prop_dist[page] = (1 - damping_factor)/len(corpus) # pode ser que falte atribuir a probabilidade para uma página que não esteja listada como link
-
-
-    # falta contemplar todas as condições de corpus
-
-    return mapped_links 
-
-
+    return pd
+    
+    
 def sample_pagerank(corpus, damping_factor, n):
     """
 #    Return PageRank values for each page by sampling `n` pages
@@ -86,6 +79,9 @@ def sample_pagerank(corpus, damping_factor, n):
 #    their estimated PageRank value (a value between 0 and 1). All
 #    PageRank values should sum to 1.
 #    """
+    print(corpus)
+    print(damping_factor)
+    print(n)
     
 def iterate_pagerank(corpus : Dict[str, List[str]], damping):
   
@@ -100,6 +96,7 @@ def iterate_pagerank(corpus : Dict[str, List[str]], damping):
         pagerank[page_key_i] = 1/len(corpus)
         link_by[page_key_i] = []
         
+        # piece of code that builds the (page-links_to_that_page) structure (different from corpus)
         for page_key_j in keys:
             if page_key_i in corpus[page_key_j] or not len(corpus[page_key_j]):
                 link_by[page_key_i].append(page_key_j)
@@ -111,15 +108,36 @@ def iterate_pagerank(corpus : Dict[str, List[str]], damping):
   
 
 def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by : dict[str, list[str]], convergence : set, damping : float):
-        
+      
+    #for page_key in corpus.keys():
+    #    
+    #    # where the source page weight comes in the pr link calculation?
+    #    pr = 0
+    #    page_pd = transition_model(corpus, page_key, damping_factor=damping)
+    #    for link, pd in page_pd.items():
+    #        pr = pr + pd 
+    #        
+    #        curr_pr = pagerank[link]
+    #        diff = curr_pr - pr                                      
+    #        if abs(diff) <= ACCURACY:
+    #            pagerank[link] = pr
+    #            convergence.add(link)
+    #            
+    #            if len(convergence) == len(corpus):
+    #                return pagerank
+    #        else:
+    #            pagerank[link] = pr 
+
     for page, curr_pr in pagerank.items():    
         pr = 0
         for link in link_by[page]:
 
             # The code information below could be encoded in the transition_model [theory]
-            link_page_pr = pagerank[link] 
+            link_page_pr = pagerank[link]
+
+            # part of the contribution calculation
             num_of_links = len(corpus[link]) if len(corpus[link]) else len(corpus.keys())  
-            link_contribution = link_page_pr/num_of_links  
+            link_contribution = link_page_pr/num_of_links # probabilistic contribution calculation
             pr = pr + link_contribution
  
         pr = (1-damping)/len(corpus) + damping * pr
