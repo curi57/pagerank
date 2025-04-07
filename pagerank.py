@@ -14,15 +14,15 @@ def main():
         sys.exit("Usage: python pagerank.py corpus")
     corpus = crawl(sys.argv[1])
     
-    #ranks = sample_pagerank(corpus, DAMPING, SAMPLES)
-    #print(f"PageRank Results from Sampling (n = {SAMPLES})")
-    #for page in sorted(ranks):
-    #    print(f"  {page}: {ranks[page]:.4f}")
-
-    ranks = iterate_pagerank(corpus, DAMPING)
-    print(f"PageRank Results from Iteration")
+    ranks = sample_pagerank(corpus, DAMPING, SAMPLES)
+    print(f"PageRank Results from Sampling (n = {SAMPLES})")
     for page in sorted(ranks):
         print(f"  {page}: {ranks[page]:.4f}")
+
+    #ranks = iterate_pagerank(corpus, DAMPING)
+    #print(f"PageRank Results from Iteration")
+    #for page in sorted(ranks):
+    #    print(f"  {page}: {ranks[page]:.4f}")
 
 
 def crawl(directory):
@@ -53,16 +53,13 @@ def crawl(directory):
 def transition_model(corpus, page, damping_factor) -> Dict[str, float]:
     
     # verify if the current page has links to other pages from the corpus
-    curr_page_links = corpus[page] if len(corpus[page]) else corpus.keys()
-    randomness = 1-damping_factor/len(curr_page_links)
-    equal_probability = 1/len(curr_page_links)
-
-    # probability distribution structure
-    pd = dict() 
+    links_in_curr_page = corpus[page] if len(corpus[page]) else corpus.keys()
+    randomness = (1-damping_factor)/len(corpus)
+    equal_probability = 1/len(links_in_curr_page)
     
-    # every page in the corpus
+    pd = dict()   
     for page in corpus.keys():
-        if page in curr_page_links:
+        if page in links_in_curr_page:
             pd[page] = randomness + (damping_factor * equal_probability)
         else:
             pd[page] = randomness
@@ -70,11 +67,40 @@ def transition_model(corpus, page, damping_factor) -> Dict[str, float]:
     return pd
     
     
-def sample_pagerank(corpus, damping_factor, n):
-    print(corpus)
-    print(damping_factor)
-    print(n)
+def sample_pagerank(corpus : dict, damping_factor, n):
+        
+    initial_page = list(corpus.keys())[random.randrange(0, len(corpus), 1)]
+
+    print(f"initial_page: {initial_page}")
     
+    samples = dict()
+    for key in corpus.keys():
+        samples[key] = 0
+
+    for _ in range(n):
+
+        print(initial_page)
+        
+        tm = transition_model(corpus, initial_page, damping_factor)
+    
+        # !transition model is not correct
+        print(f"transition_model: {tm}")
+
+        biggest = 0.0
+        next_page = None 
+        for page, prob in tm.items():
+            if prob > biggest:
+                next_page = page 
+                biggest = prob 
+             
+        samples[next_page] = samples[next_page] + 1 
+        initial_page = next_page
+    
+    for page, ocurrences in samples.items(): 
+        samples[page] = (ocurrences / n) if n > 0 else 0.0
+
+    return samples
+
 
 def iterate_pagerank(corpus : Dict[str, List[str]], damping):
   
@@ -106,12 +132,11 @@ def update(corpus : Dict[str, List[str]], pagerank : dict[str, float], link_by :
         pr = 0
         for link in link_by[page]:
 
-            # The code information below could be encoded in the transition_model [theory]
             link_page_pr = pagerank[link]
 
             # part of the contribution calculation
             num_of_links = len(corpus[link]) if len(corpus[link]) else len(corpus.keys())  
-            link_contribution = link_page_pr/num_of_links # probabilistic contribution calculation
+            link_contribution = link_page_pr/num_of_links 
             pr = pr + link_contribution
  
         pr = (1-damping)/len(corpus) + damping * pr
