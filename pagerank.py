@@ -19,10 +19,10 @@ def main():
     for page in sorted(ranks):
         print(f"  {page}: {ranks[page]:.4f}")
 
-    #ranks = iterate_pagerank(corpus, DAMPING)
-    #print(f"PageRank Results from Iteration")
-    #for page in sorted(ranks):
-    #    print(f"  {page}: {ranks[page]:.4f}")
+    ranks = iterate_pagerank(corpus, DAMPING)
+    print(f"PageRank Results from Iteration")
+    for page in sorted(ranks):
+        print(f"  {page}: {ranks[page]:.4f}")
 
 
 def crawl(directory):
@@ -77,27 +77,24 @@ def sample_pagerank(corpus : dict, damping_factor, n):
     for key in corpus.keys():
         samples[key] = 0
 
-    for _ in range(n):
-
-        print(initial_page)
-        
+    for _ in range(n):  
         tm = transition_model(corpus, initial_page, damping_factor)
-    
-        # !transition model is not correct
-        print(f"transition_model: {tm}")
-
-        biggest = 0.0
-        next_page = None 
-        for page, prob in tm.items():
-            if prob > biggest:
-                next_page = page 
-                biggest = prob 
+      
+        keys = list()
+        values = list() 
+        for key, value in tm.items():
+            keys.append(key)
+            values.append(value)
+          
+        random_choice = random.choices(keys, values)
+          
+        for page, prob in tm.items():  
+            samples[page] = samples[page] + prob
              
-        samples[next_page] = samples[next_page] + 1 
-        initial_page = next_page
+        initial_page = random_choice[0]
     
-    for page, ocurrences in samples.items(): 
-        samples[page] = (ocurrences / n) if n > 0 else 0.0
+    for page, prob_sum in samples.items(): 
+        samples[page] = (prob_sum / n) if n > 0 else 0.0
 
     return samples
 
